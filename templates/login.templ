@@ -4,27 +4,19 @@ templ Login() {
 	<html>
 		<head>
 			<script src="https://cdnjs.cloudflare.com/ajax/libs/pocketbase/0.21.2/pocketbase.umd.js"></script>
+			<script src="https://unpkg.com/htmx.org@1.9.12" integrity="sha384-ujb1lZYygJmzgSwoxRggbCHcjc0rB2XoQrxeTUQyRjrOnlCoYta87iKBWq3EsdM2" crossorigin="anonymous"></script>
 			<script type="text/javascript">
 				const pb = new PocketBase("http://127.0.0.1:8090")
-				
-				async function login() {
-					const username = document.getElementById('username').value
-					const password = document.getElementById('password').value
-					const authData = await pb.collection('users').authWithPassword(username, password)
-
-					console.log(pb.authStore.isValid);
-					console.log(pb.authStore.token);
-					console.log(pb.authStore.model.id);
-				}
 			</script>
 		</head>
 		<body>
 			<h2>Login</h2>
 
-			<input type="text" id="username"/><br/>
-			<input type="text" id="password"/><br/>
-
-			<button type="button" onclick="login();">Login</button>
+			<form action="/channels" hx-on--after-request="console.log(1234)">
+				<input type="text" id="username"/><br/>
+				<input type="text" id="password"/><br/>
+				<button type="submit">Login</button>
+			</form>
 		</body>
 	</html>
 }

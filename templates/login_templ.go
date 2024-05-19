@@ -23,7 +23,7 @@ func Login() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<html><head><script src=\"https://cdnjs.cloudflare.com/ajax/libs/pocketbase/0.21.2/pocketbase.umd.js\"></script><script src=\"https://unpkg.com/htmx.org@1.9.12\" integrity=\"sha384-ujb1lZYygJmzgSwoxRggbCHcjc0rB2XoQrxeTUQyRjrOnlCoYta87iKBWq3EsdM2\" crossorigin=\"anonymous\"></script><script type=\"text/javascript\">\r\n\t\t\t\tconst pb = new PocketBase(\"http://127.0.0.1:8090\")\r\n\t\t\t</script></head><body><h2>Login</h2><form action=\"/channels\" hx-on--after-request=\"console.log(1234)\"><input type=\"text\" id=\"username\"><br><input type=\"text\" id=\"password\"><br><button type=\"submit\">Login</button></form></body></html>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<html><head></head><body><h2>Login</h2><form method=\"post\"><input type=\"text\" id=\"identity\" name=\"identity\" required><br><input type=\"password\" id=\"password\" name=\"password\" required><br><button type=\"submit\">Login</button></form></body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

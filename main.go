@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -11,10 +12,13 @@ import (
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
+	"github.com/pocketbase/pocketbase/forms"
 	"github.com/pocketbase/pocketbase/tokens"
 	"github.com/pocketbase/pocketbase/tools/security"
 	"github.com/spf13/cast"
 )
+
+// TODO: refactor all of this into packages
 
 func loadAuthContextFromCookie(app core.App) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
@@ -56,40 +60,83 @@ func loadAuthContextFromCookie(app core.App) echo.MiddlewareFunc {
 }
 
 func Render(c echo.Context, status int, t templ.Component) error {
-    c.Response().Writer.WriteHeader(status)
+	c.Response().Writer.WriteHeader(status)
 
-    err := t.Render(context.Background(), c.Response().Writer)
+	err := t.Render(context.Background(), c.Response().Writer)
 
-    if err != nil {
-        return c.String(http.StatusInternalServerError, "Error rendering template")
-    }
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "Error rendering template")
+	}
 
-    return nil
+	return nil
 }
 
 func helloHandler(c echo.Context) error {
-    name := c.PathParam("name")
+	name := c.PathParam("name")
 
-    return Render(c, 200, templates.Hello(name))
+	return Render(c, 200, templates.Hello(name))
 }
 
-func loginHandler(c echo.Context) error {
-    return Render(c, 200, templates.Login())
+func getLoginHandler(c echo.Context) error {
+	return Render(c, 200, templates.Login())
 }
 
+func postLoginHandler(app *pocketbase.PocketBase) func(echo.Context) error {
+	return func(c echo.Context) error {
+		users, err := app.Dao().FindCollectionByNameOrId("users")
+
+		if err != nil {
+			// todo: custom error page
+			return echo.NewHTTPError(http.StatusNotFound, "Error querying users")
+		}
+
+		form := forms.NewRecordPasswordLogin(app, users)
+		c.Bind(form)
+		authRecord, err := form.Submit()
+
+		if err != nil {
+			fmt.Println(err)
+			return echo.NewHTTPError(http.StatusUnauthorized, "Error validating login")
+		}
+
+		token, err := tokens.NewRecordAuthToken(app, authRecord)
+
+		if err != nil {
+			return echo.NewHTTPError(http.StatusUnauthorized, "Error generating login token")
+		}
+
+		c.SetCookie(&http.Cookie{
+			Name:     "pb_auth",
+			Value:    token,
+			Secure:   true,
+			SameSite: http.SameSiteStrictMode,
+			HttpOnly: true,
+			MaxAge:   int(app.Settings().RecordAuthToken.Duration),
+			Path:     "/",
+		})
+
+		return c.Redirect(http.StatusFound, "/")
+	}
+}
+
+func rootHandler(c echo.Context) error {
+	return c.String(http.StatusOK, "Hello world!")
+}
 
 func main() {
-    app := pocketbase.New()
+	app := pocketbase.New()
 
-    app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
-        e.Router.Use(loadAuthContextFromCookie(app))
+	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
+		e.Router.Use(loadAuthContextFromCookie(app))
 
-        e.Router.GET("/hello/:name", helloHandler)
-        e.Router.GET("/login", loginHandler)
-        return nil
-    })
+		e.Router.GET("/hello/:name", helloHandler)
+		e.Router.GET("/login", getLoginHandler)
+		e.Router.POST("/login", postLoginHandler(app))
+		e.Router.GET("/", rootHandler)
+		return nil
+	})
 
-    if err := app.Start(); err != nil {
-        log.Fatal(err)
-    }
+	if err := app.Start(); err != nil {
+		log.Fatal(err)
+	}
 }

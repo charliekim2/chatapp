@@ -7,12 +7,15 @@ import (
 	"net/http"
 
 	"github.com/a-h/templ"
-	"github.com/charliekim2/chatapp/templates"
+	"github.com/charliekim2/chatapp/model"
+	"github.com/charliekim2/chatapp/view"
 	"github.com/labstack/echo/v5"
+	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/forms"
+	"github.com/pocketbase/pocketbase/models"
 	"github.com/pocketbase/pocketbase/tokens"
 	"github.com/pocketbase/pocketbase/tools/security"
 	"github.com/spf13/cast"
@@ -23,7 +26,7 @@ import (
 func loadAuthContextFromCookie(app core.App) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			tokenCookie, err := c.Request().Cookie("token")
+			tokenCookie, err := c.Request().Cookie("pb_auth")
 			if err != nil || tokenCookie.Value == "" {
 				return next(c) // no token cookie
 			}
@@ -74,11 +77,11 @@ func Render(c echo.Context, status int, t templ.Component) error {
 func helloHandler(c echo.Context) error {
 	name := c.PathParam("name")
 
-	return Render(c, 200, templates.Hello(name))
+	return Render(c, 200, view.Hello(name))
 }
 
 func getLoginHandler(c echo.Context) error {
-	return Render(c, 200, templates.Login())
+	return Render(c, 200, view.Login())
 }
 
 func postLoginHandler(app *pocketbase.PocketBase) func(echo.Context) error {
@@ -119,8 +122,29 @@ func postLoginHandler(app *pocketbase.PocketBase) func(echo.Context) error {
 	}
 }
 
-func rootHandler(c echo.Context) error {
-	return c.String(http.StatusOK, "Hello world!")
+func getChannelsHandler(app *pocketbase.PocketBase) func(echo.Context) error {
+	return func(c echo.Context) error {
+		authRecord := c.Get(apis.ContextAuthRecordKey).(*models.Record)
+		channels := []model.Channel{}
+
+		err := app.Dao().DB().
+			NewQuery(
+				"SELECT CHANNELS.name, CHANNELS.id " +
+					"FROM CHANNELS " +
+					"JOIN USERS_CHANNELS ON CHANNELS.id = USERS_CHANNELS.channelId " +
+					"WHERE USERS_CHANNELS.userId = {:userId};",
+			).
+			Bind(dbx.Params{"userId": authRecord.Id}).
+			All(&channels)
+
+		fmt.Println(channels)
+
+		if err != nil {
+			return echo.NewHTTPError(http.StatusNotFound, "Error getting channels for user")
+		}
+
+		return Render(c, 200, view.Channels(channels))
+	}
 }
 
 func main() {
@@ -132,7 +156,7 @@ func main() {
 		e.Router.GET("/hello/:name", helloHandler)
 		e.Router.GET("/login", getLoginHandler)
 		e.Router.POST("/login", postLoginHandler(app))
-		e.Router.GET("/", rootHandler)
+		e.Router.GET("/", getChannelsHandler(app))
 		return nil
 	})
 

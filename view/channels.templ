@@ -1,0 +1,14 @@
+package view
+
+import "github.com/charliekim2/chatapp/model"
+
+templ Channels(channels []model.Channel) {
+@Base() {
+<h1>Channels</h1>
+<ul>
+	for _, channel := range channels {
+	<li>{ channel.GetName() }</li>
+	}
+</ul>
+}
+}

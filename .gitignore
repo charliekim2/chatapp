@@ -1,5 +1,5 @@
 pb_data/
 *.exe
-view/*_templ.go
+**/*_templ.go
 build/
 .DS_Store

@@ -31,6 +31,7 @@ func main() {
 		e.Router.GET("/login", auth.GetLoginHandler)
 		e.Router.POST("/login", auth.PostLoginHandler(app))
 		e.Router.GET("/", handler.GetChannelsHandler(app))
+		e.Router.GET("/chat/:channel", handler.GetChatHandler(app))
 		return nil
 	})
 

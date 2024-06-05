@@ -20,7 +20,6 @@ func GetChatHandler(app *pocketbase.PocketBase) func(echo.Context) error {
 		authRecord := c.Get(apis.ContextAuthRecordKey).(*models.Record)
 		channel := model.Channel{}
 
-		// Determine if user is in channel requested, if not will it throw an error? Will have to test
 		err := app.Dao().DB().
 			NewQuery(
 				"SELECT CHANNELS.name, CHANNELS.id " +
@@ -40,10 +39,10 @@ func GetChatHandler(app *pocketbase.PocketBase) func(echo.Context) error {
 		// TODO: message model contains owner name, profile picture path, etc.
 		err = app.Dao().DB().
 			NewQuery(
-				"SELECT MESSAGES.id, MESSAGES.ownerId, MESSAGES.createdAt, MESSAGES.body" +
-					"FROM MESSAGES " +
-					"WHERE MESSAGES.channelId = {:channelId} " +
-					"ORDER BY MESSAGES.createdAt ASC " +
+				"SELECT id, ownerId, created, body " +
+					"FROM messages " +
+					"WHERE channelId = {:channelId}" +
+					"ORDER BY MESSAGES.created ASC " +
 					"LIMIT 50;",
 			).
 			Bind(dbx.Params{"channelId": channelId}).
@@ -53,6 +52,6 @@ func GetChatHandler(app *pocketbase.PocketBase) func(echo.Context) error {
 			return echo.NewHTTPError(http.StatusNotFound, "Could not find messages in channel")
 		}
 
-		return lib.Render(c, 200, view.Chat())
+		return lib.Render(c, 200, view.Chat(messages))
 	}
 }

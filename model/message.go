@@ -1,20 +1,24 @@
 package model
 
 type Message struct {
-	id        string
-	ownerId   string
-	createdAt string
-	body      string
+	Id        string `db:"id" json:"id"`
+	OwnerId   string `db:"ownerId" json:"ownerId"`
+	CreatedAt string `db:"created" json:"created"`
+	Body      string `db:"body" json:"body"`
 }
 
 func (m *Message) GetId() string {
-	return m.id
+	return m.Id
 }
 
 func (m *Message) GetOwnerId() string {
-	return m.ownerId
+	return m.OwnerId
+}
+
+func (m *Message) GetCreatedAt() string {
+	return m.CreatedAt
 }
 
 func (m *Message) GetBody() string {
-	return m.body
+	return m.Body
 }

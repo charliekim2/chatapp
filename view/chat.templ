@@ -1,4 +1,14 @@
 package view
 
-templ Chat() {
+import "github.com/charliekim2/chatapp/model"
+
+templ Chat(messages []model.Message) {
+@Base() {
+<h2>Chat</h2>
+<ul>
+	for _, m := range(messages) {
+	<li>{ m.GetBody() }</li>
+	}
+</ul>
+}
 }

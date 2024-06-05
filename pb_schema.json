@@ -96,31 +96,17 @@
       },
       {
         "system": false,
-        "id": "1u51vnop",
+        "id": "qhkjvjpq",
         "name": "ownerId",
-        "type": "text",
-        "required": false,
-        "presentable": false,
-        "unique": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
-      },
-      {
-        "system": false,
-        "id": "el2pfds5",
-        "name": "messages",
         "type": "relation",
         "required": false,
         "presentable": false,
         "unique": false,
         "options": {
-          "collectionId": "nf8d7ov7wtd3k35",
+          "collectionId": "_pb_users_auth_",
           "cascadeDelete": false,
           "minSelect": null,
-          "maxSelect": null,
+          "maxSelect": 1,
           "displayFields": null
         }
       }
@@ -141,8 +127,8 @@
     "schema": [
       {
         "system": false,
-        "id": "rie83tdl",
-        "name": "ownerId",
+        "id": "4upqmand",
+        "name": "body",
         "type": "text",
         "required": false,
         "presentable": false,
@@ -155,16 +141,34 @@
       },
       {
         "system": false,
-        "id": "4upqmand",
-        "name": "body",
-        "type": "text",
+        "id": "7nai0ev9",
+        "name": "channelId",
+        "type": "relation",
         "required": false,
         "presentable": false,
         "unique": false,
         "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
+          "collectionId": "8ybv4bx3mk08mu2",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "system": false,
+        "id": "ep4dbmae",
+        "name": "ownerId",
+        "type": "relation",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "_pb_users_auth_",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
         }
       }
     ],

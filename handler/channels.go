@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/charliekim2/chatapp/lib"
@@ -28,8 +27,6 @@ func GetChannelsHandler(app *pocketbase.PocketBase) func(echo.Context) error {
 			).
 			Bind(dbx.Params{"userId": authRecord.Id}).
 			All(&channels)
-
-		fmt.Println(channels)
 
 		if err != nil {
 			return echo.NewHTTPError(http.StatusNotFound, "Error getting channels for user")

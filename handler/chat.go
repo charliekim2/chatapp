@@ -2,6 +2,7 @@ package handler
 
 import (
 	"bytes"
+	"encoding/json"
 	"log"
 	"net/http"
 	"time"
@@ -78,7 +79,7 @@ func LiveChatHandler(app *pocketbase.PocketBase, hub Hub) func(echo.Context) err
 			}
 
 			chat = hub[channelId]
-			go chat.run()
+			go chat.run(app)
 		}
 
 		client := &Client{
@@ -93,16 +94,6 @@ func LiveChatHandler(app *pocketbase.PocketBase, hub Hub) func(echo.Context) err
 		go client.writePump()
 		go client.readPump()
 
-		// request websocket endpoint
-		// init Client connection in Chat
-		// keys: the pointer address?? ig
-		// read and write endpoint, with mutexes ig
-		// user sends message:
-		// websocket reads, validates?, sends to database
-		// on database update: listener that gets new message
-		// render into <li> and send to get htmx swapped beforeend
-		// determine which Client sent it -> get the Chat -> send to all Clients in that Chat
-		// on websocket close -> delete the Client/close connection properly -> if Chat is empty, delete Chat from Hub
 		return nil
 	}
 }
@@ -143,6 +134,14 @@ type Chat struct {
 	broadcast  chan []byte
 	register   chan *Client
 	unregister chan *Client
+}
+
+func (c *Chat) GetClients() map[*Client]bool {
+	return c.clients
+}
+
+func (c *Client) GetSend() chan []byte {
+	return c.send
 }
 
 // Channel IDs mapped to open chats
@@ -223,12 +222,30 @@ func (c *Client) readPump() {
 			}
 			break
 		}
+		// add client ID to message JSON
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
+
+		var msgObject model.DBMessage
+		err = json.Unmarshal(message, &msgObject)
+		if err != nil {
+			// TODO: some sort of client alert that message could not be sent? -> send a template that targets a notification element
+			log.Println("Could not unmarshal the message")
+			continue
+		}
+
+		msgObject.OwnerId = c.id
+		message, err = json.Marshal(msgObject)
+		if err != nil {
+			// TODO: some sort of client alert that message could not be sent? -> send a template that targets a notification element
+			log.Println("Could not marshal the message")
+			continue
+		}
+
 		c.chat.broadcast <- message
 	}
 }
 
-func (c *Chat) run() {
+func (c *Chat) run(app *pocketbase.PocketBase) {
 	for {
 		select {
 		case client := <-c.register:
@@ -240,16 +257,34 @@ func (c *Chat) run() {
 				close(client.send)
 			}
 		case message := <-c.broadcast:
-			// TODO: put message into html template and send that so it gets htmx swapped
-			// JSON parse out the message body
-			log.Println(string(message))
-			for client := range c.clients {
-				select {
-				case client.send <- message:
-				default:
-					close(client.send)
-					delete(c.clients, client)
-				}
+			// json parse message value
+			// insert into database
+			// add listener for messages db, get channelID
+			// if channel is in hub, parse message into template and send to clients
+			var msgObject model.DBMessage
+			err := json.Unmarshal(message, &msgObject)
+			if err != nil {
+				log.Println("Could not unmarshal the message")
+				continue
+			}
+
+			msgObject.ChannelId = c.id
+			collection, err := app.Dao().FindCollectionByNameOrId("messages")
+			// TODO: some sort of client alert that message could not be sent? -> send a template that htmx-targets a notification element
+			if err != nil {
+				log.Println("Could not find messages table")
+				continue
+			}
+			// TODO: validate/cleanse data
+			record := models.NewRecord(collection)
+
+			record.Set("body", msgObject.Body)
+			record.Set("ownerId", msgObject.OwnerId)
+			record.Set("channelId", msgObject.ChannelId)
+
+			if err = app.Dao().SaveRecord(record); err != nil {
+				log.Println("Could not save message to db")
+				continue
 			}
 		}
 	}

@@ -1,20 +1,18 @@
 package view
 
 templ Base() {
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-	<title>chatapp</title>
-	<meta charset="UTF-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1" />
-	<meta name="description" content="Chatapp made with HTMX and Golang" />
-	<script src="https://unpkg.com/htmx.org@1.9.10" defer></script>
-</head>
-
-<body>
-	{ children... }
-</body>
-
-</html>
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<title>chatapp</title>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1"/>
+			<meta name="description" content="Chatapp made with HTMX and Golang"/>
+			<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+			<script src="https://unpkg.com/htmx.org@1.9.12/dist/ext/ws.js"></script>
+		</head>
+		<body>
+			{ children... }
+		</body>
+	</html>
 }

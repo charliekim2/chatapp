@@ -24,6 +24,8 @@ func main() {
 	// organize views into packages?
 	app := pocketbase.New()
 
+	hub := make(handler.Hub)
+
 	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
 		e.Router.Use(auth.LoadAuthContextFromCookie(app))
 
@@ -32,6 +34,7 @@ func main() {
 		e.Router.POST("/login", auth.PostLoginHandler(app))
 		e.Router.GET("/", handler.GetChannelsHandler(app))
 		e.Router.GET("/chat/:channel", handler.GetChatHandler(app))
+		e.Router.GET("/livechat/:channel", handler.LiveChatHandler(app, hub))
 		return nil
 	})
 

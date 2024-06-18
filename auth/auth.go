@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cast"
 )
 
+// Credit: https://github.com/pocketbase/pocketbase/discussions/989
 func LoadAuthContextFromCookie(app core.App) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {

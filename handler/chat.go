@@ -25,7 +25,7 @@ func GetChatHandler(app *pocketbase.PocketBase) func(echo.Context) error {
 	return func(c echo.Context) error {
 		authRecord := c.Get(apis.ContextAuthRecordKey).(*models.Record)
 		channelId := c.PathParam("channel")
-		err := AuthUserChannel(app, authRecord.Id, channelId)
+		channel, err := AuthUserChannel(app, authRecord.Id, channelId)
 		if err != nil {
 			return err
 		}
@@ -48,7 +48,7 @@ func GetChatHandler(app *pocketbase.PocketBase) func(echo.Context) error {
 			return echo.NewHTTPError(http.StatusNotFound, "Could not find messages in channel")
 		}
 
-		return lib.Render(c, 200, view.Chat(messages))
+		return lib.Render(c, 200, view.Chat(messages, &channel))
 	}
 }
 
@@ -56,7 +56,7 @@ func LiveChatHandler(app *pocketbase.PocketBase, hub Hub) func(echo.Context) err
 	return func(c echo.Context) error {
 		authRecord := c.Get(apis.ContextAuthRecordKey).(*models.Record)
 		channelId := c.PathParam("channel")
-		err := AuthUserChannel(app, authRecord.Id, channelId)
+		_, err := AuthUserChannel(app, authRecord.Id, channelId)
 		if err != nil {
 			return err
 		}
@@ -78,6 +78,7 @@ func LiveChatHandler(app *pocketbase.PocketBase, hub Hub) func(echo.Context) err
 			}
 
 			chat = hub[channelId]
+			go chat.run()
 		}
 
 		client := &Client{
@@ -106,7 +107,7 @@ func LiveChatHandler(app *pocketbase.PocketBase, hub Hub) func(echo.Context) err
 	}
 }
 
-func AuthUserChannel(app *pocketbase.PocketBase, userId string, channelId string) error {
+func AuthUserChannel(app *pocketbase.PocketBase, userId string, channelId string) (model.Channel, error) {
 	channel := model.Channel{}
 
 	err := app.Dao().DB().
@@ -120,10 +121,10 @@ func AuthUserChannel(app *pocketbase.PocketBase, userId string, channelId string
 		One(&channel)
 
 	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "Could not connect to channel")
+		return model.Channel{}, echo.NewHTTPError(http.StatusNotFound, "Could not connect to channel")
 	}
 
-	return nil
+	return channel, nil
 }
 
 // Credit: https://github.com/gorilla/websocket/tree/main/examples/chat
@@ -161,9 +162,45 @@ var (
 
 // TODO: finish these
 func (c *Client) writePump() {
+	ticker := time.NewTicker(pingPeriod)
 	defer func() {
+		ticker.Stop()
 		c.conn.Close()
 	}()
+
+	for {
+		select {
+		case message, ok := <-c.send:
+			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+			if !ok {
+				// The hub closed the channel.
+				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
+				return
+			}
+
+			w, err := c.conn.NextWriter(websocket.TextMessage)
+			if err != nil {
+				return
+			}
+			w.Write(message)
+
+			// Add queued chat messages to the current websocket message.
+			n := len(c.send)
+			for i := 0; i < n; i++ {
+				w.Write(newline)
+				w.Write(<-c.send)
+			}
+
+			if err := w.Close(); err != nil {
+				return
+			}
+		case <-ticker.C:
+			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				return
+			}
+		}
+	}
 }
 
 func (c *Client) readPump() {
@@ -188,5 +225,32 @@ func (c *Client) readPump() {
 		}
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
 		c.chat.broadcast <- message
+	}
+}
+
+func (c *Chat) run() {
+	for {
+		select {
+		case client := <-c.register:
+			c.clients[client] = true
+		case client := <-c.unregister:
+			// TODO: once all clients unregister, delete chat from hub
+			if _, ok := c.clients[client]; ok {
+				delete(c.clients, client)
+				close(client.send)
+			}
+		case message := <-c.broadcast:
+			// TODO: put message into html template and send that so it gets htmx swapped
+			// JSON parse out the message body
+			log.Println(string(message))
+			for client := range c.clients {
+				select {
+				case client.send <- message:
+				default:
+					close(client.send)
+					delete(c.clients, client)
+				}
+			}
+		}
 	}
 }

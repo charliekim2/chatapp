@@ -7,7 +7,9 @@ templ Channels(channels []model.Channel) {
 <h1>Channels</h1>
 <ul>
 	for _, channel := range channels {
-	<li>{ channel.GetName() }</li>
+	<li>
+		<a href={ templ.URL("/chat/" + channel.GetId()) }>{ channel.GetName() }</a>
+	</li>
 	}
 </ul>
 }

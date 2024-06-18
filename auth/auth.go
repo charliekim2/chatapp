@@ -1,7 +1,12 @@
 package auth
 
 import (
+	"net/http"
+
+	"github.com/charliekim2/chatapp/model"
 	"github.com/labstack/echo/v5"
+	"github.com/pocketbase/dbx"
+	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tokens"
@@ -9,6 +14,7 @@ import (
 	"github.com/spf13/cast"
 )
 
+// Credit: https://github.com/pocketbase/pocketbase/discussions/989
 func LoadAuthContextFromCookie(app core.App) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
@@ -46,4 +52,24 @@ func LoadAuthContextFromCookie(app core.App) echo.MiddlewareFunc {
 			return next(c)
 		}
 	}
+}
+
+func AuthUserChannel(app *pocketbase.PocketBase, userId string, channelId string) (model.Channel, error) {
+	channel := model.Channel{}
+
+	err := app.Dao().DB().
+		NewQuery(
+			"SELECT CHANNELS.name, CHANNELS.id " +
+				"FROM CHANNELS " +
+				"JOIN USERS_CHANNELS ON CHANNELS.id = USERS_CHANNELS.channelId " +
+				"WHERE USERS_CHANNELS.userId = {:userId} AND USERS_CHANNELS.channelId = {:channelId};",
+		).
+		Bind(dbx.Params{"userId": userId, "channelId": channelId}).
+		One(&channel)
+
+	if err != nil {
+		return model.Channel{}, echo.NewHTTPError(http.StatusNotFound, "Could not connect to channel")
+	}
+
+	return channel, nil
 }

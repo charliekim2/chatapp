@@ -7,6 +7,13 @@ type Message struct {
 	Body      string `db:"body" json:"body"`
 }
 
+type DBMessage struct {
+	OwnerId   string `db:"ownerId" json:"ownerId"`
+	ChannelId string `db:"channelId" json:"channelId"`
+	Body      string `db:"body" json:"body"`
+}
+
+// TODO: refactor this out since all the fields are public anyway...
 func (m *Message) GetId() string {
 	return m.Id
 }

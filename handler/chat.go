@@ -3,9 +3,11 @@ package handler
 import (
 	"net/http"
 
+	"github.com/charliekim2/chatapp/auth"
 	"github.com/charliekim2/chatapp/lib"
 	"github.com/charliekim2/chatapp/model"
 	"github.com/charliekim2/chatapp/view"
+	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v5"
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase"
@@ -13,25 +15,17 @@ import (
 	"github.com/pocketbase/pocketbase/models"
 )
 
-// TODO: instead of closures, wrapper class for app that we define handler methods on?
+var (
+	upgrader = websocket.Upgrader{}
+)
+
 func GetChatHandler(app *pocketbase.PocketBase) func(echo.Context) error {
 	return func(c echo.Context) error {
-		channelId := c.PathParam("channel")
 		authRecord := c.Get(apis.ContextAuthRecordKey).(*models.Record)
-		channel := model.Channel{}
-
-		err := app.Dao().DB().
-			NewQuery(
-				"SELECT CHANNELS.name, CHANNELS.id " +
-					"FROM CHANNELS " +
-					"JOIN USERS_CHANNELS ON CHANNELS.id = USERS_CHANNELS.channelId " +
-					"WHERE USERS_CHANNELS.userId = {:userId} AND USERS_CHANNELS.channelId = {:channelId};",
-			).
-			Bind(dbx.Params{"userId": authRecord.Id, "channelId": channelId}).
-			One(&channel)
-
+		channelId := c.PathParam("channel")
+		channel, err := auth.AuthUserChannel(app, authRecord.Id, channelId)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusNotFound, "Could not find channel")
+			return err
 		}
 
 		messages := []model.Message{}
@@ -52,6 +46,40 @@ func GetChatHandler(app *pocketbase.PocketBase) func(echo.Context) error {
 			return echo.NewHTTPError(http.StatusNotFound, "Could not find messages in channel")
 		}
 
-		return lib.Render(c, 200, view.Chat(messages))
+		return lib.Render(c, 200, view.Chat(messages, &channel))
+	}
+}
+
+func LiveChatHandler(app *pocketbase.PocketBase, hub lib.Hub) func(echo.Context) error {
+	return func(c echo.Context) error {
+		authRecord := c.Get(apis.ContextAuthRecordKey).(*models.Record)
+		channelId := c.PathParam("channel")
+		_, err := auth.AuthUserChannel(app, authRecord.Id, channelId)
+		if err != nil {
+			return err
+		}
+
+		ws, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Could not init websocket")
+		}
+
+		chat, ok := hub[channelId]
+
+		if !ok {
+			hub[channelId] = lib.NewChat(channelId)
+
+			chat = hub[channelId]
+			go chat.Run(app)
+		}
+
+		client := lib.NewClient(authRecord.Id, chat, ws)
+
+		client.GetChat().GetRegister() <- client
+
+		go client.WritePump()
+		go client.ReadPump()
+
+		return nil
 	}
 }

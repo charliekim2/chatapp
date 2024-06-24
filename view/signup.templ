@@ -1,0 +1,18 @@
+package view
+
+templ Signup() {
+@Base() {
+<h2>Sign up</h2>
+<form method="post">
+	<input placeholder="Email" type="text" id="email" name="email" required />
+	<br />
+	<input placeholder="Username" minlength="3" type="text" id="username" name="username" required />
+	<br />
+	<input placeholder="Password" type="password" id="password" name="password" required />
+	<br />
+	<input placeholder="Confirm Password" type="password" id="passwordConfirm" name="passwordConfirm" required />
+	<br />
+	<button type="submit">Sign up</button>
+</form>
+}
+}

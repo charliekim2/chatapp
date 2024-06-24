@@ -33,8 +33,12 @@ func main() {
 		e.Router.Use(auth.LoadAuthContextFromCookie(app))
 
 		e.Router.GET("/hello/:name", helloHandler)
+
 		e.Router.GET("/login", auth.GetLoginHandler)
 		e.Router.POST("/login", auth.PostLoginHandler(app))
+		e.Router.GET("/signup", handler.GetSignupHandler)
+		e.Router.POST("/signup", handler.PostSignupHandler(app))
+
 		e.Router.GET("/", handler.GetChannelsHandler(app))
 		e.Router.GET("/chat/:channel", handler.GetChatHandler(app))
 		e.Router.GET("/livechat/:channel", handler.LiveChatHandler(app, hub))

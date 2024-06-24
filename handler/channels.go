@@ -10,12 +10,16 @@ import (
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
+	"github.com/pocketbase/pocketbase/forms"
 	"github.com/pocketbase/pocketbase/models"
 )
 
 func GetChannelsHandler(app *pocketbase.PocketBase) func(echo.Context) error {
 	return func(c echo.Context) error {
-		authRecord := c.Get(apis.ContextAuthRecordKey).(*models.Record)
+		authRecord, ok := c.Get(apis.ContextAuthRecordKey).(*models.Record)
+		if !ok {
+			return c.Redirect(http.StatusFound, "/login")
+		}
 		channels := []model.Channel{}
 
 		err := app.Dao().DB().
@@ -33,5 +37,36 @@ func GetChannelsHandler(app *pocketbase.PocketBase) func(echo.Context) error {
 		}
 
 		return lib.Render(c, 200, view.Channels(channels))
+	}
+}
+
+func SubscribeChannelHandler(app *pocketbase.PocketBase) func(echo.Context) error {
+	return func(c echo.Context) error {
+		authRecord := c.Get(apis.ContextAuthRecordKey).(*models.Record)
+		channelId := c.FormValue("channelId")
+		password := c.FormValue("password")
+
+		channel, err := app.Dao().FindRecordById("channels", channelId)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusNotFound, "Channel not found")
+		}
+
+		if channel.Get("password") != password {
+			return echo.NewHTTPError(http.StatusUnauthorized, "Incorrect password")
+		}
+
+		usersChannels, err := app.Dao().FindCollectionByNameOrId("users_channels")
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Could not subscribe to channel")
+		}
+
+		record := models.NewRecord(usersChannels)
+		form := forms.NewRecordUpsert(app, record)
+		form.LoadData(map[string]any{
+			"userId":    authRecord.Id,
+			"channelId": channelId,
+		})
+
+		return c.Redirect(http.StatusFound, "/chat/"+channelId)
 	}
 }

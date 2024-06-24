@@ -39,7 +39,11 @@ func main() {
 		e.Router.GET("/signup", handler.GetSignupHandler)
 		e.Router.POST("/signup", handler.PostSignupHandler(app))
 
-		e.Router.GET("/", handler.GetChannelsHandler(app))
+		e.Router.GET("/", func(c echo.Context) error {
+			return c.Redirect(302, "/channels")
+		})
+		e.Router.GET("/channels", handler.GetChannelsHandler(app))
+		e.Router.POST("/subscribe", handler.SubscribeChannelHandler(app))
 		e.Router.GET("/chat/:channel", handler.GetChatHandler(app))
 		e.Router.GET("/livechat/:channel", handler.LiveChatHandler(app, hub))
 		return nil

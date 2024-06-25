@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 
 	"github.com/charliekim2/chatapp/auth"
 	"github.com/charliekim2/chatapp/db"
@@ -10,6 +11,7 @@ import (
 	"github.com/charliekim2/chatapp/view"
 	"github.com/labstack/echo/v5"
 	"github.com/pocketbase/pocketbase"
+	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 )
 
@@ -33,6 +35,7 @@ func main() {
 		e.Router.Use(auth.LoadAuthContextFromCookie(app))
 
 		e.Router.GET("/hello/:name", helloHandler)
+		e.Router.GET("/*", apis.StaticDirectoryHandler(os.DirFS("static"), false))
 
 		e.Router.GET("/login", auth.GetLoginHandler)
 		e.Router.POST("/login", auth.PostLoginHandler(app))

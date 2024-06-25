@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 
+	"github.com/charliekim2/chatapp/auth"
 	"github.com/charliekim2/chatapp/lib"
 	"github.com/charliekim2/chatapp/model"
 	"github.com/charliekim2/chatapp/view"
@@ -55,6 +56,11 @@ func SubscribeChannelHandler(app *pocketbase.PocketBase) func(echo.Context) erro
 			return echo.NewHTTPError(http.StatusUnauthorized, "Incorrect password")
 		}
 
+		_, err = auth.AuthUserChannel(app, authRecord.Id, channelId)
+		if err == nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "Already subscribed to channel")
+		}
+
 		usersChannels, err := app.Dao().FindCollectionByNameOrId("users_channels")
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "Could not subscribe to channel")
@@ -66,6 +72,10 @@ func SubscribeChannelHandler(app *pocketbase.PocketBase) func(echo.Context) erro
 			"userId":    authRecord.Id,
 			"channelId": channelId,
 		})
+
+		if err = form.Submit(); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Could not subscribe to channel")
+		}
 
 		return c.Redirect(http.StatusFound, "/chat/"+channelId)
 	}

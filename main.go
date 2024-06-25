@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 
 	"github.com/charliekim2/chatapp/auth"
 	"github.com/charliekim2/chatapp/db"
@@ -10,6 +11,7 @@ import (
 	"github.com/charliekim2/chatapp/view"
 	"github.com/labstack/echo/v5"
 	"github.com/pocketbase/pocketbase"
+	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 )
 
@@ -33,13 +35,18 @@ func main() {
 		e.Router.Use(auth.LoadAuthContextFromCookie(app))
 
 		e.Router.GET("/hello/:name", helloHandler)
+		e.Router.GET("/*", apis.StaticDirectoryHandler(os.DirFS("static"), false))
 
 		e.Router.GET("/login", auth.GetLoginHandler)
 		e.Router.POST("/login", auth.PostLoginHandler(app))
 		e.Router.GET("/signup", handler.GetSignupHandler)
 		e.Router.POST("/signup", handler.PostSignupHandler(app))
 
-		e.Router.GET("/", handler.GetChannelsHandler(app))
+		e.Router.GET("/", func(c echo.Context) error {
+			return c.Redirect(302, "/channels")
+		})
+		e.Router.GET("/channels", handler.GetChannelsHandler(app))
+		e.Router.POST("/subscribe", handler.SubscribeChannelHandler(app))
 		e.Router.GET("/chat/:channel", handler.GetChatHandler(app))
 		e.Router.GET("/livechat/:channel", handler.LiveChatHandler(app, hub))
 		return nil

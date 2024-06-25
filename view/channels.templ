@@ -12,5 +12,15 @@ templ Channels(channels []model.Channel) {
 	</li>
 	}
 </ul>
+<div x-data="{open: false}">
+	<button x-on:click="open = ! open">Subscribe to a channel</button>
+	<div x-show="open">
+		<form action={ templ.URL("/subscribe") } method="post">
+			<input type="text" name="channelId" placeholder="Channel ID" required />
+			<input type="password" name="password" placeholder="Password" required />
+			<button type="submit">Subscribe</button>
+		</form>
+	</div>
+</div>
 }
 }

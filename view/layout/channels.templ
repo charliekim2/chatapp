@@ -1,0 +1,21 @@
+package layout
+
+import (
+"github.com/charliekim2/chatapp/model"
+"github.com/charliekim2/chatapp/view/component"
+)
+
+templ Channels(channels []model.Channel) {
+@Base() {
+<h1>Channels</h1>
+<ul>
+	for _, channel := range channels {
+	<li>
+		<a href={ templ.URL("/chat/" + channel.GetId()) }>{ channel.GetName() }</a>
+	</li>
+	}
+</ul>
+@component.Subscribe()
+@component.CreateChannel()
+}
+}

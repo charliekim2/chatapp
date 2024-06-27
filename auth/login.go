@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/charliekim2/chatapp/lib"
-	"github.com/charliekim2/chatapp/view"
+	"github.com/charliekim2/chatapp/view/layout"
 	"github.com/labstack/echo/v5"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/forms"
@@ -13,7 +13,7 @@ import (
 )
 
 func GetLoginHandler(c echo.Context) error {
-	return lib.Render(c, 200, view.Login())
+	return lib.Render(c, 200, layout.Login())
 }
 
 func PostLoginHandler(app *pocketbase.PocketBase) func(echo.Context) error {

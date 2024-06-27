@@ -6,7 +6,7 @@ import (
 	"github.com/charliekim2/chatapp/auth"
 	"github.com/charliekim2/chatapp/lib"
 	"github.com/charliekim2/chatapp/model"
-	"github.com/charliekim2/chatapp/view"
+	"github.com/charliekim2/chatapp/view/layout"
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v5"
 	"github.com/pocketbase/dbx"
@@ -46,7 +46,7 @@ func GetChatHandler(app *pocketbase.PocketBase) func(echo.Context) error {
 			return echo.NewHTTPError(http.StatusNotFound, "Could not find messages in channel")
 		}
 
-		return lib.Render(c, 200, view.Chat(messages, &channel))
+		return lib.Render(c, 200, layout.Chat(messages, &channel))
 	}
 }
 

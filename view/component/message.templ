@@ -1,0 +1,9 @@
+package component
+
+import "github.com/charliekim2/chatapp/model"
+
+templ Message(msg *model.Message) {
+<div id="chat_room" hx-swap-oob="beforeend">
+	<li>{ msg.Body }</li>
+</div>
+}

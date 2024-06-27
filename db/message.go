@@ -6,7 +6,7 @@ import (
 
 	"github.com/charliekim2/chatapp/lib"
 	"github.com/charliekim2/chatapp/model"
-	"github.com/charliekim2/chatapp/view"
+	"github.com/charliekim2/chatapp/view/component"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/models"
 	"github.com/pocketbase/pocketbase/tools/types"
@@ -27,7 +27,7 @@ func OnMessageCreate(hub lib.Hub) func(e *core.ModelEvent) error {
 		ownerId := e.Model.(*models.Record).Get("ownerId").(string)
 
 		msg := model.Message{Id: id, Body: body, CreatedAt: createdAt, OwnerId: ownerId}
-		component := view.Message(&msg)
+		component := component.Message(&msg)
 		var b []byte
 		buf := bytes.NewBuffer(b)
 		component.Render(context.Background(), buf)

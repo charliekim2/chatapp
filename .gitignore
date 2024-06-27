@@ -1,4 +1,4 @@
-static/output.css
+output.css
 pb_data/
 *.exe
 **/*_templ.go

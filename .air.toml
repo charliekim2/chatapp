@@ -9,7 +9,7 @@ tmp_dir = ""
 # Array of commands to run before each build
 # pre_cmd = ["echo 'hello air'"]
 # Just plain old shell command. You could use `make` as well.
-cmd = "tailwindcss -i static/input.css -o static/output.css --minify && templ generate && go build -o ./build/main.exe ."
+cmd = "templ generate && go build -o ./build/main.exe . && tailwindcss -i static/input.css -o static/output.css"
 # Array of commands to run after ^C
 # post_cmd = ["echo 'hello air'"]
 # Binary file yields from `cmd`.

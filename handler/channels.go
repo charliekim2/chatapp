@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/charliekim2/chatapp/auth"
+	"github.com/charliekim2/chatapp/db"
 	"github.com/charliekim2/chatapp/lib"
 	"github.com/charliekim2/chatapp/model"
 	"github.com/charliekim2/chatapp/view/layout"
@@ -91,40 +92,14 @@ func CreateChannelHandler(app *pocketbase.PocketBase) func(echo.Context) error {
 		name := c.FormValue("channelName")
 		password := c.FormValue("password")
 
-		channels, err := app.Dao().FindCollectionByNameOrId("channels")
+		channel := model.DBChannel{
+			Name:     name,
+			Password: password,
+			OwnerId:  authRecord.Id,
+		}
+		channelId, err := db.CreateChannel(app, &channel)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "Could not create channel")
-		}
-
-		record := models.NewRecord(channels)
-		form := forms.NewRecordUpsert(app, record)
-		form.LoadData(map[string]any{
-			"name":     name,
-			"password": password,
-			"ownerId":  authRecord.Id,
-		})
-
-		if err = form.Submit(); err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "Could not create channel")
-		}
-
-		channelId := record.GetId()
-
-		// TODO: make owner subcription to channel transactional/atomic
-		usersChannels, err := app.Dao().FindCollectionByNameOrId("users_channels")
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "Could not subscribe to channel")
-		}
-
-		UCRecord := models.NewRecord(usersChannels)
-		UCForm := forms.NewRecordUpsert(app, UCRecord)
-		UCForm.LoadData(map[string]any{
-			"userId":    authRecord.Id,
-			"channelId": channelId,
-		})
-
-		if err = UCForm.Submit(); err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "Could not subscribe to channel")
 		}
 
 		return c.Redirect(http.StatusFound, "/chat/"+channelId)

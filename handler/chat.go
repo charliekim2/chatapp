@@ -35,7 +35,7 @@ func GetChatHandler(app *pocketbase.PocketBase) func(echo.Context) error {
 			NewQuery(
 				"SELECT id, ownerId, created, body " +
 					"FROM messages " +
-					"WHERE channelId = {:channelId}" +
+					"WHERE channelId = {:channelId} " +
 					"ORDER BY MESSAGES.created ASC " +
 					"LIMIT 50;",
 			).

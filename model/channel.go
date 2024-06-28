@@ -5,6 +5,13 @@ type Channel struct {
 	Name string `db:"name" json:"name"`
 }
 
+type DBChannel struct {
+	Id       string `db:"id" json:"id"`
+	Name     string `db:"name" json:"name"`
+	OwnerId  string `db:"ownerId" json:"ownerId"`
+	Password string `db:"password" json:"password"`
+}
+
 func (c *Channel) GetName() string {
 	return c.Name
 }

@@ -149,7 +149,7 @@
         "unique": false,
         "options": {
           "collectionId": "8ybv4bx3mk08mu2",
-          "cascadeDelete": false,
+          "cascadeDelete": true,
           "minSelect": null,
           "maxSelect": 1,
           "displayFields": null
@@ -196,7 +196,7 @@
         "unique": false,
         "options": {
           "collectionId": "_pb_users_auth_",
-          "cascadeDelete": false,
+          "cascadeDelete": true,
           "minSelect": null,
           "maxSelect": 1,
           "displayFields": null
@@ -212,7 +212,7 @@
         "unique": false,
         "options": {
           "collectionId": "8ybv4bx3mk08mu2",
-          "cascadeDelete": false,
+          "cascadeDelete": true,
           "minSelect": null,
           "maxSelect": 1,
           "displayFields": null

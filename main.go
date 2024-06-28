@@ -23,6 +23,7 @@ func main() {
 	hub := make(lib.Hub)
 
 	app.OnModelAfterCreate("messages").Add(db.OnMessageCreate(hub))
+	app.OnModelAfterCreate("channels").Add(db.OnChannelCreate(app))
 
 	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
 		e.Router.Use(auth.LoadAuthContextFromCookie(app))

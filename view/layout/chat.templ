@@ -1,6 +1,9 @@
 package layout
 
-import "github.com/charliekim2/chatapp/model"
+import (
+	"github.com/charliekim2/chatapp/view/component"
+	"github.com/charliekim2/chatapp/model"
+)
 
 templ Chat(messages []model.Message, channel *model.Channel) {
 	@Base() {
@@ -17,5 +20,6 @@ templ Chat(messages []model.Message, channel *model.Channel) {
 				<input type="submit" value="Send"/>
 			</form>
 		</div>
+		@component.EditChannel(channel)
 	}
 }

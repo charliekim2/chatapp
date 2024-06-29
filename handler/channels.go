@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/charliekim2/chatapp/auth"
@@ -100,6 +101,63 @@ func CreateChannelHandler(app *pocketbase.PocketBase) func(echo.Context) error {
 		channelId, err := db.CreateChannel(app, &channel)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "Could not create channel")
+		}
+
+		return c.Redirect(http.StatusFound, "/chat/"+channelId)
+	}
+}
+
+func DeleteChannelHandler(app *pocketbase.PocketBase) func(echo.Context) error {
+	return func(c echo.Context) error {
+		authRecord, ok := c.Get(apis.ContextAuthRecordKey).(*models.Record)
+		if !ok {
+			return c.Redirect(http.StatusFound, "/login")
+		}
+
+		channelId := c.PathParam("channelId")
+		_, err := auth.AuthUserChannel(app, authRecord.Id, channelId)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusForbidden, "You do not own this channel")
+		}
+
+		err = db.DeleteChannel(app, channelId)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Could not delete channel")
+		}
+
+		// Tell client to go back to channels, as the current channel is now deleted
+		c.Response().Header().Set("HX-Redirect", "/channels")
+		return c.String(200, "Deleted the channel")
+	}
+}
+
+func EditChannelHandler(app *pocketbase.PocketBase) func(echo.Context) error {
+	return func(c echo.Context) error {
+		authRecord, ok := c.Get(apis.ContextAuthRecordKey).(*models.Record)
+		if !ok {
+			return c.Redirect(http.StatusFound, "/login")
+		}
+
+		channelId := c.PathParam("channelId")
+		_, err := auth.AuthUserChannel(app, authRecord.Id, channelId)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusForbidden, "User is not owner of channel")
+		}
+
+		name := c.FormValue("channelName")
+		password := c.FormValue("password")
+		ownerId := authRecord.Id // Later allow changing owner
+		channel := model.DBChannel{
+			Id:       channelId,
+			Name:     name,
+			Password: password,
+			OwnerId:  ownerId,
+		}
+
+		err = db.UpdateChannel(app, &channel)
+		if err != nil {
+			log.Print(err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "Could not update channel")
 		}
 
 		return c.Redirect(http.StatusFound, "/chat/"+channelId)

@@ -28,21 +28,28 @@ func main() {
 	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
 		e.Router.Use(auth.LoadAuthContextFromCookie(app))
 
+		// Static
 		e.Router.GET("/*", apis.StaticDirectoryHandler(os.DirFS("static"), false))
 
+		// Auth/signup
 		e.Router.GET("/login", auth.GetLoginHandler)
 		e.Router.POST("/login", auth.PostLoginHandler(app))
 		e.Router.GET("/signup", handler.GetSignupHandler)
 		e.Router.POST("/signup", handler.PostSignupHandler(app))
 
+		// UserChannel operations
 		e.Router.GET("/", func(c echo.Context) error {
 			return c.Redirect(302, "/channels")
 		})
-
-		e.Router.GET("/channels", handler.GetChannelsHandler(app))
 		e.Router.POST("/subscribe", handler.SubscribeChannelHandler(app))
-		e.Router.POST("/channel", handler.CreateChannelHandler(app))
+		e.Router.GET("/channels", handler.GetChannelsHandler(app))
 
+		// Channel operations
+		e.Router.POST("/channel", handler.CreateChannelHandler(app))
+		e.Router.DELETE("/editchannel/:channelId", handler.DeleteChannelHandler(app))
+		e.Router.POST("/editchannel/:channelId", handler.EditChannelHandler(app))
+
+		// Chat/message operations
 		e.Router.GET("/chat/:channel", handler.GetChatHandler(app))
 		e.Router.GET("/livechat/:channel", handler.LiveChatHandler(app, hub))
 		return nil

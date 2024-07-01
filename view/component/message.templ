@@ -4,6 +4,18 @@ import "github.com/charliekim2/chatapp/model"
 
 templ Message(msg *model.Message) {
 	<div id="chat_room" hx-swap-oob="beforeend">
-		<li>{ msg.Body }</li>
+		<li id={ msg.Id }>{ msg.Body }</li>
+	</div>
+}
+
+templ EditMessage(msg *model.Message) {
+	<div id={ msg.Id } hx-swap-oob="true">
+		<li id={ msg.Id }>{ msg.Body }</li>
+	</div>
+}
+
+templ DeleteMessage(msg *model.Message) {
+	<div id={ msg.Id } hx-swap-oob="delete">
+		<li id={ msg.Id }>{ msg.Body }</li>
 	</div>
 }

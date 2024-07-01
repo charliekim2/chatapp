@@ -22,7 +22,10 @@ func main() {
 
 	hub := make(lib.Hub)
 
-	app.OnModelAfterCreate("messages").Add(db.OnMessageCreate(hub))
+	app.OnModelAfterCreate("messages").Add(db.OnMessageEvent(hub, "create"))
+	app.OnModelAfterUpdate("messages").Add(db.OnMessageEvent(hub, "update"))
+	app.OnModelAfterDelete("messages").Add(db.OnMessageEvent(hub, "delete"))
+
 	app.OnModelAfterCreate("channels").Add(db.OnChannelCreate(app))
 
 	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {

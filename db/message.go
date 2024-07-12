@@ -91,6 +91,7 @@ func ReadMessage(app *pocketbase.PocketBase, messageId string) (*model.Message, 
 		Body:      record.Get("body").(string),
 		CreatedAt: record.Get("created").(types.DateTime).String(),
 		OwnerId:   record.Get("ownerId").(string),
+		ChannelId: record.Get("channelId").(string),
 	}
 	return message, nil
 }

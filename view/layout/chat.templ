@@ -12,7 +12,7 @@ templ Chat(messages []model.Message, channel *model.Channel) {
 			<ul id="chat_room">
 				for _, m := range(messages) {
 					// TODO: template for "old" messages
-					<li>{ m.Body }</li>
+					@component.OldMessage(&m)
 				}
 			</ul>
 			<form id="new_message" ws-send>

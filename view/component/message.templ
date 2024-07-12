@@ -1,0 +1,33 @@
+package component
+
+import "github.com/charliekim2/chatapp/model"
+
+// Concatenate "m" to start of msg id because HTML hates ids that start with numbers
+templ Message(msg *model.Message) {
+	<div id="chat_room" hx-swap-oob="beforeend">
+		<li x-data="{ open : false }" id={ "m" + msg.Id }>
+			<p x-on:click="open = true">{ msg.Body }</p>
+			@EditMessageModal(msg)
+		</li>
+	</div>
+}
+
+templ OldMessage(msg *model.Message) {
+	<li x-data="{ open : false }" id={ "m" + msg.Id }>
+		<p x-on:click="open = true">{ msg.Body }</p>
+		@EditMessageModal(msg)
+	</li>
+}
+
+templ EditMessage(msg *model.Message) {
+	<li x-data="{ open : false }" id={ "m" + msg.Id } hx-swap-oob="true">
+		<p x-on:click="open = true">{ msg.Body }</p>
+		@EditMessageModal(msg)
+	</li>
+}
+
+templ DeleteMessage(msg *model.Message) {
+	<div id={ "m" + msg.Id } hx-swap-oob="delete">
+		// <li id={ msg.Id }>{ msg.Body }</li>
+	</div>
+}

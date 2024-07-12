@@ -4,10 +4,12 @@ type Message struct {
 	Id        string `db:"id" json:"id"`
 	OwnerId   string `db:"ownerId" json:"ownerId"`
 	CreatedAt string `db:"created" json:"created"`
+	ChannelId string `db:"channelId" json:"channelId"`
 	Body      string `db:"body" json:"body"`
 }
 
 type DBMessage struct {
+	Id        string `db:"id" json:"id"`
 	OwnerId   string `db:"ownerId" json:"ownerId"`
 	ChannelId string `db:"channelId" json:"channelId"`
 	Body      string `db:"body" json:"body"`

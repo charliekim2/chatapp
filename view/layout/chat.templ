@@ -1,6 +1,9 @@
-package view
+package layout
 
-import "github.com/charliekim2/chatapp/model"
+import (
+	"github.com/charliekim2/chatapp/view/component"
+	"github.com/charliekim2/chatapp/model"
+)
 
 templ Chat(messages []model.Message, channel *model.Channel) {
 	@Base() {
@@ -9,13 +12,14 @@ templ Chat(messages []model.Message, channel *model.Channel) {
 			<ul id="chat_room">
 				for _, m := range(messages) {
 					// TODO: template for "old" messages
-					<li>{ m.Body }</li>
+					@component.OldMessage(&m)
 				}
 			</ul>
 			<form id="new_message" ws-send>
-				<input type="text" name="body"/>
+				<input placeholder="Type a message..." type="text" name="body"/>
 				<input type="submit" value="Send"/>
 			</form>
 		</div>
+		@component.EditChannel(channel)
 	}
 }

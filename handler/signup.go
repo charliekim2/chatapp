@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/charliekim2/chatapp/lib"
-	"github.com/charliekim2/chatapp/view"
+	"github.com/charliekim2/chatapp/view/layout"
 	"github.com/labstack/echo/v5"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/forms"
@@ -20,7 +20,7 @@ type User struct {
 }
 
 func GetSignupHandler(c echo.Context) error {
-	return lib.Render(c, 200, view.Signup())
+	return lib.Render(c, 200, layout.Signup())
 }
 
 func PostSignupHandler(app *pocketbase.PocketBase) func(c echo.Context) error {

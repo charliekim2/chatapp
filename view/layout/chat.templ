@@ -5,14 +5,14 @@ import (
 	"github.com/charliekim2/chatapp/model"
 )
 
-templ Chat(messages []model.Message, channel *model.Channel) {
+templ Chat(messages []model.Message, channel *model.Channel, user *model.User) {
 	@Base() {
 		<div hx-ext="ws" ws-connect={ string(templ.URL("/livechat/" + channel.GetId())) }>
 			<h2>{ channel.GetName() }</h2>
 			<ul id="chat_room">
 				for _, m := range(messages) {
 					// TODO: template for "old" messages
-					@component.OldMessage(&m)
+					@component.OldMessage(&m, user)
 				}
 			</ul>
 			<form id="new_message" ws-send>

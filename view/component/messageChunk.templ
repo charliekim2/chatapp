@@ -1,0 +1,15 @@
+package component
+
+import (
+	"github.com/charliekim2/chatapp/model"
+)
+
+// TODO: define scroll message that triggers loading more messages
+// first message in chunk triggers loading more messages
+templ MessageChunk(msgs []model.Message, user *model.User) {
+	<div id="chat_room" hx-swap-oob="afterbegin">
+		for _, m := range(msgs) {
+			@OldMessage(&m, user)
+		}
+	</div>
+}

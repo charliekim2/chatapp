@@ -2,10 +2,13 @@ package handler
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/charliekim2/chatapp/auth"
+	"github.com/charliekim2/chatapp/db"
 	"github.com/charliekim2/chatapp/lib"
 	"github.com/charliekim2/chatapp/model"
+	"github.com/charliekim2/chatapp/view/component"
 	"github.com/charliekim2/chatapp/view/layout"
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v5"
@@ -46,7 +49,8 @@ func GetChatHandler(app *pocketbase.PocketBase) func(echo.Context) error {
 			return echo.NewHTTPError(http.StatusNotFound, "Could not find messages in channel")
 		}
 
-		return lib.Render(c, 200, layout.Chat(messages, &channel))
+		user, err := db.ReadUser(app, authRecord.Id)
+		return lib.Render(c, 200, layout.Chat(messages, &channel, user))
 	}
 }
 
@@ -73,7 +77,8 @@ func LiveChatHandler(app *pocketbase.PocketBase, hub lib.Hub) func(echo.Context)
 			go chat.Run(app)
 		}
 
-		client := lib.NewClient(authRecord.Id, chat, ws)
+		user, err := db.ReadUser(app, authRecord.Id)
+		client := lib.NewClient(user, chat, ws)
 
 		client.GetChat().GetRegister() <- client
 
@@ -81,5 +86,40 @@ func LiveChatHandler(app *pocketbase.PocketBase, hub lib.Hub) func(echo.Context)
 		go client.ReadPump()
 
 		return nil
+	}
+}
+
+func MessageChunkHandler(app *pocketbase.PocketBase) func(echo.Context) error {
+	return func(c echo.Context) error {
+		authRecord := c.Get(apis.ContextAuthRecordKey).(*models.Record)
+		channelId := c.PathParam("channel")
+		_, err := auth.AuthUserChannel(app, authRecord.Id, channelId)
+		if err != nil {
+			return err
+		}
+
+		messages := []model.Message{}
+		offset, err := strconv.ParseInt(c.QueryParam("offset"), 10, 64)
+
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "Invalid offset")
+		}
+
+		err = app.Dao().DB().
+			Select("id", "ownerId", "created", "body").
+			From("messages").
+			Where(dbx.NewExp("channelId = {:channelId}", dbx.Params{"channelId": channelId})).
+			OrderBy("MESSAGES.created ASC").
+			Limit(50).
+			Offset(offset).
+			Bind(dbx.Params{"channelId": channelId}).
+			All(&messages)
+
+		if err != nil {
+			return echo.NewHTTPError(http.StatusNotFound, "Could not find messages in channel")
+		}
+
+		user, err := db.ReadUser(app, authRecord.Id)
+		return lib.Render(c, 200, component.MessageChunk(messages, user))
 	}
 }

@@ -31,23 +31,23 @@ func OnMessageEvent(hub lib.Hub, eventType string) func(e *core.ModelEvent) erro
 
 		msg := model.Message{Id: id, Body: body, CreatedAt: createdAt, OwnerId: ownerId}
 
-		var cmpt templ.Component
-		switch eventType {
-		case "create":
-			cmpt = component.Message(&msg)
-		case "update":
-			cmpt = component.EditMessage(&msg)
-		case "delete":
-			cmpt = component.DeleteMessage(&msg)
-		default:
-			return errors.New("Invalid event type")
-		}
-
-		var b []byte
-		buf := bytes.NewBuffer(b)
-		cmpt.Render(context.Background(), buf)
-
 		for client := range chat.GetClients() {
+			var cmpt templ.Component
+			switch eventType {
+			case "create":
+				cmpt = component.Message(&msg, client.GetUser())
+			case "update":
+				cmpt = component.EditMessage(&msg, client.GetUser())
+			case "delete":
+				cmpt = component.DeleteMessage(&msg)
+			default:
+				return errors.New("Invalid event type")
+			}
+
+			var b []byte
+			buf := bytes.NewBuffer(b)
+			cmpt.Render(context.Background(), buf)
+
 			select {
 			case client.GetSend() <- buf.Bytes():
 			default:

@@ -55,6 +55,7 @@ func main() {
 		// Chat/message operations
 		e.Router.GET("/chat/:channel", handler.GetChatHandler(app))
 		e.Router.GET("/livechat/:channel", handler.LiveChatHandler(app, hub))
+		e.Router.GET("/messagechunk/:channel", handler.MessageChunkHandler(app))
 		e.Router.PUT("/editmessage/:messageId", handler.EditMessageHandler(app))
 		e.Router.DELETE("/editmessage/:messageId", handler.DeleteMessageHandler(app))
 		return nil

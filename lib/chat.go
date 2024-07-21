@@ -9,6 +9,8 @@ import (
 	"github.com/pocketbase/pocketbase/models"
 )
 
+const CHUNK = 10
+
 // Credit: https://github.com/gorilla/websocket/tree/main/examples/chat
 // A live chat with a map of connected clients
 type Chat struct {

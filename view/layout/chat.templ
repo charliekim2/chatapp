@@ -10,15 +10,15 @@ templ Chat(messages []model.Message, channel *model.Channel, user *model.User) {
 		<div hx-ext="ws" ws-connect={ string(templ.URL("/livechat/" + channel.GetId())) }>
 			<h2>{ channel.GetName() }</h2>
 			<ul id="chat_room">
-				for _, m := range(messages) {
-					// TODO: template for "old" messages
-					@component.OldMessage(&m, user)
-				}
+				@component.MessageChunk(messages, user, channel, 0)
 			</ul>
-			<form id="new_message" ws-send>
-				<input placeholder="Type a message..." type="text" name="body"/>
-				<input type="submit" value="Send"/>
-			</form>
+			<div x-data="{ body : '', message : ''}">
+				<form id="new_message" ws-send x-on:submit="body=message; message=''">
+					<input x-model="message" placeholder="Type a message..." type="text" name="message"/>
+					<input x-model="body" type="hidden" name="body"/>
+					<input type="submit" value="Send"/>
+				</form>
+			</div>
 		</div>
 		@component.EditChannel(channel)
 	}

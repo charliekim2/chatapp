@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"slices"
 	"strconv"
 
 	"github.com/charliekim2/chatapp/auth"
@@ -35,15 +36,14 @@ func GetChatHandler(app *pocketbase.PocketBase) func(echo.Context) error {
 
 		// TODO: message model contains owner name, profile picture path, etc.
 		err = app.Dao().DB().
-			NewQuery(
-				"SELECT id, ownerId, created, body " +
-					"FROM messages " +
-					"WHERE channelId = {:channelId} " +
-					"ORDER BY MESSAGES.created ASC " +
-					"LIMIT 50;",
-			).
-			Bind(dbx.Params{"channelId": channelId}).
+			Select("id", "ownerId", "created", "body").
+			From("messages").
+			Where(dbx.NewExp("channelId = {:channelId}", dbx.Params{"channelId": channelId})).
+			OrderBy("MESSAGES.created DESC").
+			Limit(lib.CHUNK).
 			All(&messages)
+
+		slices.Reverse(messages)
 
 		if err != nil {
 			return echo.NewHTTPError(http.StatusNotFound, "Could not find messages in channel")
@@ -93,13 +93,13 @@ func MessageChunkHandler(app *pocketbase.PocketBase) func(echo.Context) error {
 	return func(c echo.Context) error {
 		authRecord := c.Get(apis.ContextAuthRecordKey).(*models.Record)
 		channelId := c.PathParam("channel")
-		_, err := auth.AuthUserChannel(app, authRecord.Id, channelId)
+		channel, err := auth.AuthUserChannel(app, authRecord.Id, channelId)
 		if err != nil {
 			return err
 		}
 
 		messages := []model.Message{}
-		offset, err := strconv.ParseInt(c.QueryParam("offset"), 10, 64)
+		offset, err := strconv.Atoi(c.QueryParam("offset"))
 
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, "Invalid offset")
@@ -109,17 +109,23 @@ func MessageChunkHandler(app *pocketbase.PocketBase) func(echo.Context) error {
 			Select("id", "ownerId", "created", "body").
 			From("messages").
 			Where(dbx.NewExp("channelId = {:channelId}", dbx.Params{"channelId": channelId})).
-			OrderBy("MESSAGES.created ASC").
-			Limit(50).
-			Offset(offset).
+			OrderBy("MESSAGES.created DESC").
+			Limit(lib.CHUNK).
+			Offset(int64(offset)).
 			Bind(dbx.Params{"channelId": channelId}).
 			All(&messages)
+
+		if len(messages) == 0 {
+			return nil
+		}
+
+		slices.Reverse(messages)
 
 		if err != nil {
 			return echo.NewHTTPError(http.StatusNotFound, "Could not find messages in channel")
 		}
 
 		user, err := db.ReadUser(app, authRecord.Id)
-		return lib.Render(c, 200, component.MessageChunk(messages, user))
+		return lib.Render(c, 200, component.MessageChunk(messages, user, &channel, offset))
 	}
 }

@@ -6,21 +6,23 @@ import (
 	"strconv"
 )
 
-// TODO: define scroll message that triggers loading more messages
-// first message in chunk triggers loading more messages
 templ MessageChunk(msgs []model.Message, user *model.User, channel *model.Channel, offset int) {
-	if len(msgs) == lib.CHUNK {
-		<div
-			hx-get={ "/messagechunk/" + channel.Id + "?offset=" + strconv.Itoa(offset+lib.CHUNK) }
-			hx-trigger="revealed"
-			hx-swap="beforebegin"
-		>
-			@OldMessage(&msgs[0], user)
-		</div>
-	} else {
-		@OldMessage(&msgs[0], user)
-	}
-	for _, m := range(msgs[1:]) {
-		@OldMessage(&m, user)
+	if len(msgs) > 0 {
+		if len(msgs) > 1 {
+			for _, m := range(msgs[:len(msgs)-1]) {
+				@OldMessage(&m, user)
+			}
+		}
+		if len(msgs) == lib.CHUNK {
+			<div
+				hx-get={ "/messagechunk/" + channel.Id + "?offset=" + strconv.Itoa(offset+lib.CHUNK) }
+				hx-trigger="intersect once"
+				hx-swap="afterend"
+			>
+				@OldMessage(&msgs[len(msgs)-1], user)
+			</div>
+		} else {
+			@OldMessage(&msgs[len(msgs)-1], user)
+		}
 	}
 }

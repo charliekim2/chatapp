@@ -7,19 +7,23 @@ import (
 
 templ Chat(messages []model.Message, channel *model.Channel, user *model.User) {
 	@Base() {
-		<div hx-ext="ws" ws-connect={ string(templ.URL("/livechat/" + channel.GetId())) }>
-			<h2>{ channel.GetName() }</h2>
-			<ul id="chat_room">
-				@component.MessageChunk(messages, user, channel, 0)
-			</ul>
-			<div x-data="{ body : '', message : ''}">
-				<form id="new_message" ws-send x-on:submit="body=message; message=''">
-					<input x-model="message" placeholder="Type a message..." type="text" name="message"/>
-					<input x-model="body" type="hidden" name="body"/>
-					<input type="submit" value="Send"/>
-				</form>
+		<div class="h-screen">
+			<header class="bg-white p-4">
+				<h2 class="text-2xl">{ channel.GetName() }</h2>
+				@component.EditChannel(channel)
+			</header>
+			<div hx-ext="ws" ws-connect={ string(templ.URL("/livechat/" + channel.GetId())) }>
+				<ul id="chat_room" class="overflow-auto flex flex-col-reverse h-96">
+					@component.MessageChunk(messages, user, channel, 0)
+				</ul>
+				<div class="bg-white p-4" x-data="{ body : '', message : ''}">
+					<form id="new_message" ws-send x-on:submit="body=message; message=''">
+						<input x-model="message" placeholder="Type a message..." type="text" name="message"/>
+						<input x-model="body" type="hidden" name="body"/>
+						<input type="submit" value="Send"/>
+					</form>
+				</div>
 			</div>
 		</div>
-		@component.EditChannel(channel)
 	}
 }

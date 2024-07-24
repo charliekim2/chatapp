@@ -2,7 +2,6 @@ package handler
 
 import (
 	"net/http"
-	"slices"
 	"strconv"
 
 	"github.com/charliekim2/chatapp/auth"
@@ -43,13 +42,16 @@ func GetChatHandler(app *pocketbase.PocketBase) func(echo.Context) error {
 			Limit(lib.CHUNK).
 			All(&messages)
 
-		slices.Reverse(messages)
-
 		if err != nil {
 			return echo.NewHTTPError(http.StatusNotFound, "Could not find messages in channel")
 		}
 
 		user, err := db.ReadUser(app, authRecord.Id)
+
+		if err != nil {
+			return echo.NewHTTPError(http.StatusNotFound, "Could not find user")
+		}
+
 		return lib.Render(c, 200, layout.Chat(messages, &channel, user))
 	}
 }
@@ -115,17 +117,16 @@ func MessageChunkHandler(app *pocketbase.PocketBase) func(echo.Context) error {
 			Bind(dbx.Params{"channelId": channelId}).
 			All(&messages)
 
-		if len(messages) == 0 {
-			return nil
-		}
-
-		slices.Reverse(messages)
-
 		if err != nil {
 			return echo.NewHTTPError(http.StatusNotFound, "Could not find messages in channel")
 		}
 
 		user, err := db.ReadUser(app, authRecord.Id)
+
+		if err != nil {
+			return echo.NewHTTPError(http.StatusNotFound, "Could not find user")
+		}
+
 		return lib.Render(c, 200, component.MessageChunk(messages, user, &channel, offset))
 	}
 }

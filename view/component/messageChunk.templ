@@ -1,0 +1,28 @@
+package component
+
+import (
+	"github.com/charliekim2/chatapp/model"
+	"github.com/charliekim2/chatapp/lib"
+	"strconv"
+)
+
+templ MessageChunk(msgs []model.Message, user *model.User, channel *model.Channel, offset int) {
+	if len(msgs) > 0 {
+		if len(msgs) > 1 {
+			for _, m := range(msgs[:len(msgs)-1]) {
+				@OldMessage(&m, user)
+			}
+		}
+		if len(msgs) == lib.CHUNK {
+			<div
+				hx-get={ "/messagechunk/" + channel.Id + "?offset=" + strconv.Itoa(offset+lib.CHUNK) }
+				hx-trigger="intersect once"
+				hx-swap="afterend"
+			>
+				@OldMessage(&msgs[len(msgs)-1], user)
+			</div>
+		} else {
+			@OldMessage(&msgs[len(msgs)-1], user)
+		}
+	}
+}

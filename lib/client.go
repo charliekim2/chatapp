@@ -25,7 +25,7 @@ var (
 
 // A user connection to a live chat
 type Client struct {
-	id   string
+	user *model.User
 	chat *Chat
 	conn *websocket.Conn
 	send chan []byte
@@ -39,9 +39,17 @@ func (c *Client) GetChat() *Chat {
 	return c.chat
 }
 
-func NewClient(id string, chat *Chat, conn *websocket.Conn) *Client {
+func (c *Client) GetId() string {
+	return c.user.Id
+}
+
+func (c *Client) GetUser() *model.User {
+	return c.user
+}
+
+func NewClient(user *model.User, chat *Chat, conn *websocket.Conn) *Client {
 	return &Client{
-		id:   id,
+		user: user,
 		chat: chat,
 		conn: conn,
 		send: make(chan []byte, 512),
@@ -122,7 +130,7 @@ func (c *Client) ReadPump() {
 			continue
 		}
 
-		msgObject.OwnerId = c.id
+		msgObject.OwnerId = c.GetId()
 		message, err = json.Marshal(msgObject)
 		if err != nil {
 			// TODO: some sort of client alert that message could not be sent? -> send a template that targets a notification element

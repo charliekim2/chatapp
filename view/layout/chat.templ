@@ -5,21 +5,25 @@ import (
 	"github.com/charliekim2/chatapp/model"
 )
 
-templ Chat(messages []model.Message, channel *model.Channel) {
+// TODO: not an ideal way to set chat room height but works for now
+// https://stackoverflow.com/questions/10155344/auto-height-div-with-overflow-and-scroll-when-needed
+templ Chat(messages []model.Message, channel *model.Channel, user *model.User) {
 	@Base() {
+		<header class="bg-white p-4">
+			<h2 class="text-2xl">{ channel.GetName() }</h2>
+			@component.EditChannel(channel)
+		</header>
 		<div hx-ext="ws" ws-connect={ string(templ.URL("/livechat/" + channel.GetId())) }>
-			<h2>{ channel.GetName() }</h2>
-			<ul id="chat_room">
-				for _, m := range(messages) {
-					// TODO: template for "old" messages
-					@component.OldMessage(&m)
-				}
+			<ul id="chat_room" class="overflow-auto flex flex-col-reverse h-[calc(100vh-160px)]">
+				@component.MessageChunk(messages, user, channel, 0)
 			</ul>
-			<form id="new_message" ws-send>
-				<input placeholder="Type a message..." type="text" name="body"/>
-				<input type="submit" value="Send"/>
-			</form>
+			<div class="bg-white p-4" x-data="{ body : '', message : ''}">
+				<form id="new_message" ws-send x-on:submit="body=message; message=''">
+					<input x-model="message" placeholder="Type a message..." type="text" name="message"/>
+					<input x-model="body" type="hidden" name="body"/>
+					<input type="submit" value="Send"/>
+				</form>
+			</div>
 		</div>
-		@component.EditChannel(channel)
 	}
 }

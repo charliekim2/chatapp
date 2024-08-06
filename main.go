@@ -16,15 +16,15 @@ import (
 
 func main() {
 
-	//TODO: refactor handlers into groups, function that sets up handlers
+	// TODO: refactor handlers into groups, function that sets up handlers
 	// organize views into packages?
 	app := pocketbase.New()
 
 	hub := make(lib.Hub)
 
-	app.OnModelAfterCreate("messages").Add(db.OnMessageEvent(hub, "create"))
-	app.OnModelAfterUpdate("messages").Add(db.OnMessageEvent(hub, "update"))
-	app.OnModelAfterDelete("messages").Add(db.OnMessageEvent(hub, "delete"))
+	app.OnModelAfterCreate("messages").Add(db.OnMessageEvent(hub, "create", app))
+	app.OnModelAfterUpdate("messages").Add(db.OnMessageEvent(hub, "update", app))
+	app.OnModelAfterDelete("messages").Add(db.OnMessageEvent(hub, "delete", app))
 
 	app.OnModelAfterCreate("channels").Add(db.OnChannelCreate(app))
 

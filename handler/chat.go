@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"log"
 	"net/http"
 	"strconv"
 
@@ -31,18 +32,20 @@ func GetChatHandler(app *pocketbase.PocketBase) func(echo.Context) error {
 			return err
 		}
 
-		messages := []model.Message{}
+		messages := []model.MessageAndUser{}
 
 		// TODO: message model contains owner name, profile picture path, etc.
 		err = app.Dao().DB().
-			Select("id", "ownerId", "created", "body").
+			Select("messages.id", "ownerId", "messages.created", "body", "users.name", "users.avatar").
 			From("messages").
+			InnerJoin("users", dbx.NewExp("users.id = messages.ownerId")).
 			Where(dbx.NewExp("channelId = {:channelId}", dbx.Params{"channelId": channelId})).
 			OrderBy("MESSAGES.created DESC").
 			Limit(lib.CHUNK).
 			All(&messages)
 
 		if err != nil {
+			log.Println(err)
 			return echo.NewHTTPError(http.StatusNotFound, "Could not find messages in channel")
 		}
 
@@ -100,7 +103,7 @@ func MessageChunkHandler(app *pocketbase.PocketBase) func(echo.Context) error {
 			return err
 		}
 
-		messages := []model.Message{}
+		messages := []model.MessageAndUser{}
 		offset, err := strconv.Atoi(c.QueryParam("offset"))
 
 		if err != nil {
@@ -108,8 +111,9 @@ func MessageChunkHandler(app *pocketbase.PocketBase) func(echo.Context) error {
 		}
 
 		err = app.Dao().DB().
-			Select("id", "ownerId", "created", "body").
+			Select("messages.id", "ownerId", "messages.created", "body", "users.name, users.avatar").
 			From("messages").
+			InnerJoin("users", dbx.NewExp("users.id = messages.ownerId")).
 			Where(dbx.NewExp("channelId = {:channelId}", dbx.Params{"channelId": channelId})).
 			OrderBy("MESSAGES.created DESC").
 			Limit(lib.CHUNK).

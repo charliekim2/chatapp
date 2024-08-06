@@ -7,7 +7,7 @@ import (
 
 // TODO: not an ideal way to set chat room height but works for now
 // https://stackoverflow.com/questions/10155344/auto-height-div-with-overflow-and-scroll-when-needed
-templ Chat(messages []model.Message, channel *model.Channel, user *model.User) {
+templ Chat(messages []model.MessageAndUser, channel *model.Channel, user *model.User) {
 	@Base() {
 		<header class="bg-white p-4">
 			<h2 class="text-2xl">{ channel.GetName() }</h2>

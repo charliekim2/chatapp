@@ -2,46 +2,39 @@ package component
 
 import "github.com/charliekim2/chatapp/model"
 
-// Concatenate "m" to start of msg id because HTML doesn't like ids that start with numbers
-templ Message(msg *model.Message, user *model.User) {
+// m + id is the outer message for deletion
+// b + id is the message body for editing
+templ MessageInner(msg *model.MessageAndUser, user *model.User) {
+	if msg.OwnerId == user.Id {
+		<li x-data="{ open : false }" id={ "m" + msg.Id }>
+			<div class="flex" x-on:click="open = true">
+				<p>{ msg.Name + ": " }</p>
+				<p id={ "b" + msg.Id }>{ msg.Body }</p>
+			</div>
+			@EditMessageModal(msg)
+		</li>
+	} else {
+		<li>
+			<div class="flex" x-on:click="open = true">
+				<p>{ msg.Name + ": " }</p>
+				<p id={ "b" + msg.Id }>{ msg.Body }</p>
+			</div>
+		</li>
+	}
+}
+
+templ Message(msg *model.MessageAndUser, user *model.User) {
 	<div id="chat_room" hx-swap-oob="afterbegin">
-		if msg.OwnerId == user.Id {
-			<li x-data="{ open : false }" id={ "m" + msg.Id }>
-				<p x-on:click="open = true">{ msg.Body }</p>
-				@EditMessageModal(msg)
-			</li>
-		} else {
-			<li id={ "m" + msg.Id }>
-				<p>{ msg.Body }</p>
-			</li>
-		}
+		@MessageInner(msg, user)
 	</div>
 }
 
-templ OldMessage(msg *model.Message, user *model.User) {
-	if msg.OwnerId == user.Id {
-		<li x-data="{ open : false }" id={ "m" + msg.Id }>
-			<p x-on:click="open = true">{ msg.Body }</p>
-			@EditMessageModal(msg)
-		</li>
-	} else {
-		<li id={ "m" + msg.Id }>
-			<p>{ msg.Body }</p>
-		</li>
-	}
+templ OldMessage(msg *model.MessageAndUser, user *model.User) {
+	@MessageInner(msg, user)
 }
 
-templ EditMessage(msg *model.Message, user *model.User) {
-	if msg.OwnerId == user.Id {
-		<li x-data="{ open : false }" id={ "m" + msg.Id } hx-swap-oob="true">
-			<p x-on:click="open = true">{ msg.Body }</p>
-			@EditMessageModal(msg)
-		</li>
-	} else {
-		<li id={ "m" + msg.Id } hx-swap-oob="true">
-			<p>{ msg.Body }</p>
-		</li>
-	}
+templ EditMessage(msg *model.Message) {
+	<p id={ "b" + msg.Id } hx-swap-oob="true">{ msg.Body }</p>
 }
 
 templ DeleteMessage(msg *model.Message) {

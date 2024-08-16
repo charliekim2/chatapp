@@ -1,8 +1,9 @@
 package model
 
 type Channel struct {
-	Id   string `db:"id" json:"id"`
-	Name string `db:"name" json:"name"`
+	Id      string `db:"id" json:"id"`
+	Name    string `db:"name" json:"name"`
+	OwnerId string `db:"ownerId" json:"ownerId"`
 }
 
 type DBChannel struct {

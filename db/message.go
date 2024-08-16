@@ -16,7 +16,8 @@ import (
 	"github.com/pocketbase/pocketbase/tools/types"
 )
 
-func OnMessageEvent(hub lib.Hub, eventType string) func(e *core.ModelEvent) error {
+// TODO: different event handlers for each event type so we dont fetch data we dont need
+func OnMessageEvent(hub lib.Hub, eventType string, app *pocketbase.PocketBase) func(e *core.ModelEvent) error {
 	return func(e *core.ModelEvent) error {
 		channelId := e.Model.(*models.Record).Get("channelId")
 		chat, ok := hub[channelId.(string)]
@@ -30,14 +31,27 @@ func OnMessageEvent(hub lib.Hub, eventType string) func(e *core.ModelEvent) erro
 		ownerId := e.Model.(*models.Record).Get("ownerId").(string)
 
 		msg := model.Message{Id: id, Body: body, CreatedAt: createdAt, OwnerId: ownerId}
+		sender, err := ReadUser(app, ownerId)
+		if err != nil {
+			return err
+		}
+
+		messageUser := model.MessageAndUser{
+			Avatar:    sender.Avatar,
+			Name:      sender.Name,
+			Id:        id,
+			Body:      body,
+			CreatedAt: createdAt,
+			OwnerId:   ownerId,
+		}
 
 		for client := range chat.GetClients() {
 			var cmpt templ.Component
 			switch eventType {
 			case "create":
-				cmpt = component.Message(&msg, client.GetUser())
+				cmpt = component.Message(&messageUser, client.GetUser())
 			case "update":
-				cmpt = component.EditMessage(&msg, client.GetUser())
+				cmpt = component.EditMessage(&msg)
 			case "delete":
 				cmpt = component.DeleteMessage(&msg)
 			default:

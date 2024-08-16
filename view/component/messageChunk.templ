@@ -6,7 +6,7 @@ import (
 	"strconv"
 )
 
-templ MessageChunk(msgs []model.Message, user *model.User, channel *model.Channel, offset int) {
+templ MessageChunk(msgs []model.MessageAndUser, user *model.User, channel *model.Channel, offset int) {
 	if len(msgs) > 0 {
 		if len(msgs) > 1 {
 			for _, m := range(msgs[:len(msgs)-1]) {

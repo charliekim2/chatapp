@@ -59,7 +59,7 @@ func AuthUserChannel(app *pocketbase.PocketBase, userId string, channelId string
 
 	err := app.Dao().DB().
 		NewQuery(
-			"SELECT CHANNELS.name, CHANNELS.id " +
+			"SELECT CHANNELS.name, CHANNELS.id, CHANNELS.ownerId " +
 				"FROM CHANNELS " +
 				"JOIN USERS_CHANNELS ON CHANNELS.id = USERS_CHANNELS.channelId " +
 				"WHERE USERS_CHANNELS.userId = {:userId} AND USERS_CHANNELS.channelId = {:channelId};",

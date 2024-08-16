@@ -1,5 +1,15 @@
 package model
 
+type MessageAndUser struct {
+	Avatar    string `db:"avatar"`
+	Name      string `db:"name"`
+	Id        string `db:"id" json:"id"`
+	OwnerId   string `db:"ownerId" json:"ownerId"`
+	CreatedAt string `db:"created" json:"created"`
+	ChannelId string `db:"channelId" json:"channelId"`
+	Body      string `db:"body" json:"body"`
+}
+
 type Message struct {
 	Id        string `db:"id" json:"id"`
 	OwnerId   string `db:"ownerId" json:"ownerId"`

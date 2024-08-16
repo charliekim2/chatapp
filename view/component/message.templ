@@ -2,46 +2,50 @@ package component
 
 import "github.com/charliekim2/chatapp/model"
 
-// Concatenate "m" to start of msg id because HTML doesn't like ids that start with numbers
-templ Message(msg *model.Message, user *model.User) {
-	<div id="chat_room" hx-swap-oob="afterbegin">
-		if msg.OwnerId == user.Id {
-			<li x-data="{ open : false }" id={ "m" + msg.Id }>
-				<p x-on:click="open = true">{ msg.Body }</p>
-				@EditMessageModal(msg)
-			</li>
-		} else {
-			<li id={ "m" + msg.Id }>
-				<p>{ msg.Body }</p>
-			</li>
-		}
+templ Contents(msg *model.MessageAndUser) {
+	<div class="flex h-fit space-x-4 my-2">
+		<img src={ "/api/files/users/" + msg.OwnerId + "/" + msg.Avatar } alt="?" class="rounded-full h-12 w-12 object-cover"/>
+		<div class="flex flex-col">
+			<div class="flex flex-row space-x-2 items-end">
+				<p class="font-bold">{ msg.Name }</p>
+				<p class="italic text-sm">{ msg.CreatedAt }</p>
+			</div>
+			<p id={ "b" + msg.Id }>{ msg.Body }</p>
+		</div>
 	</div>
 }
 
-templ OldMessage(msg *model.Message, user *model.User) {
+// m + id is the outer message for deletion
+// b + id is the message body for editing
+templ MessageInner(msg *model.MessageAndUser, user *model.User) {
 	if msg.OwnerId == user.Id {
 		<li x-data="{ open : false }" id={ "m" + msg.Id }>
-			<p x-on:click="open = true">{ msg.Body }</p>
+			<div x-on:click="open = true">
+				@Contents(msg)
+			</div>
 			@EditMessageModal(msg)
 		</li>
 	} else {
-		<li id={ "m" + msg.Id }>
-			<p>{ msg.Body }</p>
+		<li>
+			<div>
+				@Contents(msg)
+			</div>
 		</li>
 	}
 }
 
-templ EditMessage(msg *model.Message, user *model.User) {
-	if msg.OwnerId == user.Id {
-		<li x-data="{ open : false }" id={ "m" + msg.Id } hx-swap-oob="true">
-			<p x-on:click="open = true">{ msg.Body }</p>
-			@EditMessageModal(msg)
-		</li>
-	} else {
-		<li id={ "m" + msg.Id } hx-swap-oob="true">
-			<p>{ msg.Body }</p>
-		</li>
-	}
+templ Message(msg *model.MessageAndUser, user *model.User) {
+	<div id="chat_room" hx-swap-oob="afterbegin">
+		@MessageInner(msg, user)
+	</div>
+}
+
+templ OldMessage(msg *model.MessageAndUser, user *model.User) {
+	@MessageInner(msg, user)
+}
+
+templ EditMessage(msg *model.Message) {
+	<p id={ "b" + msg.Id } hx-swap-oob="true">{ msg.Body }</p>
 }
 
 templ DeleteMessage(msg *model.Message) {

@@ -11,12 +11,26 @@ templ Chat(messages []model.MessageAndUser, channel *model.Channel, user *model.
 	@Base() {
 		<header class="bg-white p-4">
 			<h2 class="text-2xl">{ channel.GetName() }</h2>
-			@component.EditChannel(channel)
+			if user.Id == channel.OwnerId {
+				@component.EditChannel(channel)
+			}
 		</header>
 		<div hx-ext="ws" ws-connect={ string(templ.URL("/livechat/" + channel.GetId())) }>
-			<ul id="chat_room" class="overflow-auto flex flex-col-reverse h-[calc(100vh-160px)]">
-				@component.MessageChunk(messages, user, channel, 0)
-			</ul>
+			if user.Id == channel.OwnerId {
+				<ul
+					id="chat_room"
+					class="overflow-auto flex flex-col-reverse h-[calc(100vh-160px)] space-y-reverse-16 px-4"
+				>
+					@component.MessageChunk(messages, user, channel, 0)
+				</ul>
+			} else {
+				<ul
+					id="chat_room"
+					class="overflow-auto flex flex-col-reverse h-[calc(100vh-120px)] px-4"
+				>
+					@component.MessageChunk(messages, user, channel, 0)
+				</ul>
+			}
 			<div class="bg-white p-4" x-data="{ body : '', message : ''}">
 				<form id="new_message" ws-send x-on:submit="body=message; message=''">
 					<input x-model="message" placeholder="Type a message..." type="text" name="message"/>

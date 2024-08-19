@@ -1,0 +1,30 @@
+package layout
+
+import "github.com/charliekim2/chatapp/model"
+
+templ EditProfile(user *model.User) {
+	@Base() {
+		<div class="h-screen flex items-center justify-center space-x-8">
+			<form class="flex flex-col" method="post">
+				<input type="text" name="name" placeholder="Username"/>
+				<input type="password" name="password" placeholder="Password"/>
+				<input type="password" name="passwordConfirm" placeholder="Confirm password"/>
+				<input type="password" name="oldPassword" placeholder="Old password"/>
+				<button type="submit">Update profile</button>
+			</form>
+			<div x-data="" class="flex flex-col space-y-2">
+				<img id="avatar" class="h-32 w-32 rounded-full object-cover" src={ "/api/files/users/" + user.Id + "/" + user.Avatar }/>
+				<form class="flex flex-col" method="post" action="/uploadavatar" enctype="multipart/form-data">
+					<input
+						x-on:change="document.getElementById('avatar').src=URL.createObjectURL($event.target.files[0])"
+						type="file"
+						accept="image/png, image/jpeg"
+						name="avatar"
+						required
+					/>
+					<button class="w-fit" type="submit">Upload avatar</button>
+				</form>
+			</div>
+		</div>
+	}
+}

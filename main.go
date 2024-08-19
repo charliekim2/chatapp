@@ -9,6 +9,7 @@ import (
 	"github.com/charliekim2/chatapp/handler"
 	"github.com/charliekim2/chatapp/lib"
 	"github.com/labstack/echo/v5"
+	"github.com/labstack/echo/v5/middleware"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
@@ -29,6 +30,7 @@ func main() {
 	app.OnModelAfterCreate("channels").Add(db.OnChannelCreate(app))
 
 	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
+		e.Router.Use(middleware.BodyLimit(2000000))
 		e.Router.Use(auth.LoadAuthContextFromCookie(app))
 
 		// Static
@@ -39,6 +41,11 @@ func main() {
 		e.Router.POST("/login", auth.PostLoginHandler(app))
 		e.Router.GET("/signup", handler.GetSignupHandler)
 		e.Router.POST("/signup", handler.PostSignupHandler(app))
+
+		//User operations
+		e.Router.GET("/editprofile", handler.EditProfileHandler(app))
+		e.Router.POST("/editprofile", handler.UpdateUserHandler(app))
+		e.Router.POST("/uploadavatar", handler.UploadAvatarHandler(app))
 
 		// UserChannel operations
 		e.Router.GET("/", func(c echo.Context) error {

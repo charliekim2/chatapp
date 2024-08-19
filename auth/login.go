@@ -21,7 +21,6 @@ func PostLoginHandler(app *pocketbase.PocketBase) func(echo.Context) error {
 		users, err := app.Dao().FindCollectionByNameOrId("users")
 
 		if err != nil {
-			// todo: custom error page
 			return echo.NewHTTPError(http.StatusNotFound, "Error querying users")
 		}
 

@@ -40,6 +40,10 @@ func main() {
 		e.Router.GET("/signup", handler.GetSignupHandler)
 		e.Router.POST("/signup", handler.PostSignupHandler(app))
 
+		//User operations
+		e.Router.GET("/editprofile", handler.EditProfileHandler(app))
+		e.Router.POST("/editprofile", handler.UpdateUserHandler(app))
+
 		// UserChannel operations
 		e.Router.GET("/", func(c echo.Context) error {
 			return c.Redirect(302, "/channels")

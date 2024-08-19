@@ -1,0 +1,17 @@
+package layout
+
+import "github.com/charliekim2/chatapp/model"
+
+templ EditProfile(user *model.User) {
+	@Base() {
+		<div class="h-screen flex flex-col items-center justify-center">
+			<form method="post">
+				<input type="text" name="name" placeholder="Username"/>
+				<input type="password" name="password" placeholder="Password"/>
+				<input type="password" name="passwordConfirm" placeholder="Confirm password"/>
+				<input type="password" name="oldPassword" placeholder="Old password"/>
+				<button type="submit">Update profile</button>
+			</form>
+		</div>
+	}
+}

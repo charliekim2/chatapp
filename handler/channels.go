@@ -139,8 +139,8 @@ func EditChannelHandler(app *pocketbase.PocketBase) func(echo.Context) error {
 		}
 
 		channelId := c.PathParam("channelId")
-		_, err := auth.AuthUserChannel(app, authRecord.Id, channelId)
-		if err != nil {
+		ch, err := auth.AuthUserChannel(app, authRecord.Id, channelId)
+		if err != nil || ch.OwnerId != authRecord.Id {
 			return echo.NewHTTPError(http.StatusForbidden, "User is not owner of channel")
 		}
 

@@ -7,15 +7,18 @@ import (
 
 templ Channels(channels []model.Channel) {
 	@Base() {
-		<h1>Channels</h1>
-		<ul>
-			for _, channel := range channels {
-				<li>
-					<a href={ templ.URL("/chat/" + channel.GetId()) }>{ channel.GetName() }</a>
-				</li>
-			}
-		</ul>
-		@component.Subscribe()
-		@component.CreateChannel()
+		<div class="h-screen flex flex-col items-center justify-center">
+			<h1>Channels</h1>
+			<ul>
+				for _, channel := range channels {
+					<li>
+						<a href={ templ.URL("/chat/" + channel.GetId()) }>{ channel.GetName() }</a>
+					</li>
+				}
+			</ul>
+			@component.Subscribe()
+			@component.CreateChannel()
+			<a href="/editprofile">Edit profile</a>
+		</div>
 	}
 }

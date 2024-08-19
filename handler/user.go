@@ -3,6 +3,7 @@ package handler
 import (
 	"log"
 	"net/http"
+	"slices"
 
 	"github.com/charliekim2/chatapp/db"
 	"github.com/charliekim2/chatapp/lib"
@@ -14,6 +15,7 @@ import (
 	"github.com/pocketbase/pocketbase/forms"
 	"github.com/pocketbase/pocketbase/models"
 	"github.com/pocketbase/pocketbase/tokens"
+	"github.com/pocketbase/pocketbase/tools/filesystem"
 )
 
 func EditProfileHandler(app *pocketbase.PocketBase) func(c echo.Context) error {
@@ -91,6 +93,38 @@ func UpdateUserHandler(app *pocketbase.PocketBase) func(c echo.Context) error {
 
 func UploadAvatarHandler(app *pocketbase.PocketBase) func(c echo.Context) error {
 	return func(c echo.Context) error {
+		authRecord, ok := c.Get(apis.ContextAuthRecordKey).(*models.Record)
+		if !ok {
+			return c.Redirect(http.StatusFound, "/login")
+		}
+
+		file, err := c.FormFile("avatar")
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "Could not upload avatar")
+		}
+
+		validTypes := []string{"image/jpeg", "image/png"}
+		if !slices.Contains(validTypes, file.Header.Get("Content-Type")) {
+			return echo.NewHTTPError(http.StatusBadRequest, "Avatar must be a JPEG or PNG image")
+		}
+
+		user, err := app.Dao().FindRecordById("users", authRecord.Id)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusNotFound, "Could not find user")
+		}
+
+		fileStream, err := filesystem.NewFileFromMultipart(file)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Could not upload avatar")
+		}
+
+		form := forms.NewRecordUpsert(app, user)
+		form.AddFiles("avatar", fileStream)
+
+		if err = form.Submit(); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Could not upload avatar")
+		}
+
 		return c.Redirect(http.StatusFound, "/editprofile")
 	}
 }

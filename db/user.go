@@ -16,6 +16,7 @@ func ReadUser(app *pocketbase.PocketBase, userId string) (*model.User, error) {
 		Id:       record.GetId(),
 		Username: record.Get("username").(string),
 		Name:     record.Get("name").(string),
+		Avatar:   record.Get("avatar").(string),
 	}
 	return user, nil
 }
